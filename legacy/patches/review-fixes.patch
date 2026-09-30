@@ -1,0 +1,63 @@
+--- a/MHD_fShock.c
++++ b/MHD_fShock.c
+@@ -112,8 +112,10 @@
+     fm = f(xm);
+   };
+ 
+-  while( fabs( x2-x1 ) > TOL*fabs(x2)+TOL ) {
++  int it = 0;
++  while( fabs( x2-x1 ) > TOL*fabs(x2)+TOL && it++ < 100 ) {
+     f2 = f(x2);
++    if( f2 == 0.0 || f2 == f1 ) break;   // FIX: guard against 0/0 at round-off level
+     dx = f2*(x2-x1)/(f2-f1);   // Sekanten-Verfahren
+     f1 = f2;
+     
+--- a/MHD_sShockMax.c
++++ b/MHD_sShockMax.c
+@@ -110,8 +110,10 @@
+     fm = f(xm);
+   };
+ 
+-  while( fabs( x2-x1 ) > TOL*fabs(x2)+TOL ) {
++  int it = 0;
++  while( fabs( x2-x1 ) > TOL*fabs(x2)+TOL && it++ < 100 ) {
+     f2 = f(x2);
++    if( f2 == 0.0 || f2 == f1 ) break;   // FIX: guard against 0/0 at round-off level
+     dx = f2*(x2-x1)/(f2-f1);   // Sekanten-Verfahren
+     f1 = f2;
+     
+--- a/Newton.c
++++ b/Newton.c
+@@ -40,8 +40,9 @@
+       printf( "%14.10f", f[i] );
+     };
+     printf( "\n" ); //getch();
++    if( NormInf(f,n) != NormInf(f,n) ) { printf(" Newton: NaN residual, abort\n"); break; }  // FIX
+   }
+-  while( (NormInf(f,n) > EPS_Nwtn) && (N < Nmax) );
++  while( !(NormInf(f,n) <= EPS_Nwtn) && (N < Nmax) );  // FIX: NaN no longer counts as converged
+   
+   return( N );
+ };
+@@ -74,7 +75,7 @@
+ {
+   double erg = 0;
+   for( int i=0; i<n; i++ )
+-    erg = max(fabs(f[i]),erg);
++    erg = (fabs(f[i]) > erg || f[i] != f[i]) ? fabs(f[i]) : erg;  // FIX: propagate NaN
+   return( erg );
+ };
+ 
+--- a/MHD_Main1.c
++++ b/MHD_Main1.c
+@@ -292,8 +292,8 @@
+     U1.Bn = Data0_R.Bn + n*(Data1_R.Bn-Data0_R.Bn)/nstep;
+     alpha1 = beta0_R  +  n*(beta1_R  - beta0_R)/nstep;
+     
+-    vt[0] = vt0[0] + n/nstep*(vt1[0]-vt0[0]);
+-    vt[1] = vt0[1] + n/nstep*(vt1[1]-vt0[1]);
++    vt[0] = vt0[0] + (double)n/nstep*(vt1[0]-vt0[0]);  // FIX: integer division
++    vt[1] = vt0[1] + (double)n/nstep*(vt1[1]-vt0[1]);  // FIX: integer division
+ 
+     printf( "  || Continuation Step %d of %d\n  ||\n  || With Data:\n", n, nstep );
+     printf( "  ||       rho,    v1,    v2,    v3,    B1,    B2,    B3,    p\n" );

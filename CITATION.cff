@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the report below."
+title: "ExactMHDRiemann.jl: exact solver for Riemann problems of ideal MHD"
+authors:
+  - family-names: Torrilhon
+    given-names: Manuel
+    email: mt@acom.rwth-aachen.de
+    affiliation: "ACoM, RWTH Aachen University"
+version: 0.1.0
+license: MIT
+preferred-citation:
+  type: report
+  title: "Exact Solver and Uniqueness Conditions for Riemann Problems of Ideal Magnetohydrodynamics"
+  authors:
+    - family-names: Torrilhon
+      given-names: Manuel
+  institution:
+    name: "Seminar für Angewandte Mathematik, ETH Zürich"
+  number: "2002-06"
+  year: 2002
+  month: 4

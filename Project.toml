@@ -1,0 +1,40 @@
+name = "ExactMHDRiemann"
+uuid = "0d315d94-8d33-4e3b-9f90-006d7b2d27bf"
+authors = ["Manuel Torrilhon <mt@acom.rwth-aachen.de>"]
+version = "0.1.0"
+
+[deps]
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
+OrdinaryDiffEqVerner = "79d7bb75-1356-48c1-b8c0-6832512096c2"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+
+[compat]
+DelimitedFiles = "1"
+ForwardDiff = "1"
+LinearAlgebra = "1"
+Logging = "1"
+NonlinearSolve = "4"
+OrdinaryDiffEqVerner = "2"
+Printf = "1"
+Random = "1"
+Roots = "3"
+SciMLBase = "3"
+StaticArrays = "1.9"
+TOML = "1"
+Test = "1"
+julia = "1.10"
+
+[extras]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["DelimitedFiles", "Random", "Test"]
