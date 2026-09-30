@@ -1,4 +1,4 @@
-name = "ExactMHDRiemann"
+name = "ExactMHDRiemannSolver"
 uuid = "0d315d94-8d33-4e3b-9f90-006d7b2d27bf"
 authors = ["Manuel Torrilhon <mt@acom.rwth-aachen.de>"]
 version = "0.1.0"

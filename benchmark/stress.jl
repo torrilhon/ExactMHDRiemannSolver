@@ -1,5 +1,5 @@
 # Stress scan: harder random problems than the test suite. Run: julia --project=. benchmark/stress.jl 1000
-using ExactMHDRiemann, Random
+using ExactMHDRiemannSolver, Random
 function side(rng, Bn; bmax=3.0, ratio=100.0)
     bt = exp(rand(rng)*log(bmax/0.01))*0.01; th = 2π*rand(rng)
     ρ = exp((2rand(rng)-1)*log(ratio)/2); p = exp((2rand(rng)-1)*log(ratio)/2)

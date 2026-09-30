@@ -1,7 +1,7 @@
-using ExactMHDRiemann
+using ExactMHDRiemannSolver
 using Test, Random, DelimitedFiles, LinearAlgebra
 using StaticArrays, ForwardDiff
-const E = ExactMHDRiemann
+const E = ExactMHDRiemannSolver
 
 const DATA = joinpath(@__DIR__, "data")
 const s4 = sqrt(4π)
@@ -15,7 +15,7 @@ end
 randstate(rng; Bn = 0.3 + 2rand(rng)) = E.HState(0.2 + 3rand(rng), 2rand(rng) - 1, 0.2 + 3rand(rng),
     0.1 + 2rand(rng), 2π * rand(rng), SVector(rand(rng) - 0.5, rand(rng) - 0.5)), Bn
 
-@testset "ExactMHDRiemann" begin
+@testset "ExactMHDRiemannSolver" begin
 
 @testset "kernels: Rankine-Hugoniot" begin
     rng = MersenneTwister(1)

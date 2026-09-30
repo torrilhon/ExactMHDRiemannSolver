@@ -1,4 +1,4 @@
-# ExactMHDRiemann.jl
+# ExactMHDRiemannSolver.jl
 
 Exact solutions of Riemann problems of one-dimensional ideal magnetohydrodynamics
 (γ-law gas), for benchmarking numerical schemes. The algorithm follows
@@ -23,7 +23,7 @@ The package is not registered. Install it from the repository:
 
 ```julia
 using Pkg
-Pkg.add(url = "https://github.com/torrilhon/ExactMHDRiemann")
+Pkg.add(url = "https://github.com/torrilhon/ExactMHDRiemannSolver")
 ```
 
 Julia 1.10 or newer. The first call compiles the nonlinear and ODE solvers (about
@@ -32,7 +32,7 @@ Julia 1.10 or newer. The first call compiles the nonlinear and ODE solvers (abou
 ## Quick start
 
 ```julia
-using ExactMHDRiemann
+using ExactMHDRiemannSolver
 
 #     (ρ,   vx,  vy,  vz,  Bx,  By,       Bz,       p)
 L = [3.0, 0.0, 0.0, 0.0, 1.5, 1.0,      0.0,      3.0]

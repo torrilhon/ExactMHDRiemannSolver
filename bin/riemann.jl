@@ -9,7 +9,7 @@
 #   t = 0.4
 #   x = [-1.0, 1.0]
 #   n = 2001
-using ExactMHDRiemann, TOML
+using ExactMHDRiemannSolver, TOML
 
 function main(args)
     isempty(args) && (println(stderr, "usage: riemann.jl problem.toml [out.csv]"); return 2)

@@ -1,5 +1,5 @@
 """
-    ExactMHDRiemann
+    ExactMHDRiemannSolver
 
 Exact solver for Riemann problems of 1D ideal magnetohydrodynamics (γ-law gas),
 following M. Torrilhon, "Exact Solver and Uniqueness Conditions for Riemann
@@ -9,7 +9,7 @@ Version 0.1 computes regular solutions only (fast/slow Lax shocks, fast/slow fan
 rotational discontinuities, contact). Every returned solution is checked
 independently; inputs outside the supported domain are refused with a reason.
 """
-module ExactMHDRiemann
+module ExactMHDRiemannSolver
 
 using LinearAlgebra
 using Logging
