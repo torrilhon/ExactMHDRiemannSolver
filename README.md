@@ -23,7 +23,7 @@ The package is not registered. Install it from the repository:
 
 ```julia
 using Pkg
-Pkg.add(url = "https://github.com/torrilhon/exactMHDRiemannSolver")
+Pkg.add(url = "https://github.com/torrilhon/ExactMHDRiemann")
 ```
 
 Julia 1.10 or newer. The first call compiles the nonlinear and ODE solvers (about
