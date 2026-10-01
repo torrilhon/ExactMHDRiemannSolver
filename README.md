@@ -3,9 +3,15 @@
 Exact solutions of Riemann problems of one-dimensional ideal magnetohydrodynamics
 (γ-law gas), for benchmarking numerical schemes. The algorithm follows
 
-> M. Torrilhon, *Exact Solver and Uniqueness Conditions for Riemann Problems of Ideal
-> Magnetohydrodynamics*, Research Report 2002-06, Seminar für Angewandte Mathematik,
-> ETH Zürich (2002).
+> M. Torrilhon, [*Exact Solver and Uniqueness Conditions for Riemann Problems of Ideal
+> Magnetohydrodynamics*](https://www.sam.math.ethz.ch/sam_reports/reports_final/reports2002/2002-06.pdf),
+> SAM Research Report 2002-06, ETH Zürich, 2002.
+
+Also see:
+
+> M. Torrilhon, *Uniqueness conditions for Riemann problems of ideal
+> magnetohydrodynamics*, Journal of Plasma Physics **69**(3), 253–276 (2003),
+> doi:[10.1017/S0022377803002186](https://doi.org/10.1017/S0022377803002186).
 
 Version 0.1 computes **regular solutions**: fast and slow Lax shocks, fast and slow
 rarefaction fans, rotational (Alfvén) discontinuities and the contact; for a vanishing
@@ -16,7 +22,8 @@ not computed yet.
 
 ## How to cite
 
-If you use this code, please cite the report above. A `CITATION.cff` file is included,
+If you use this code, please cite the report and the article above. A
+[`CITATION.cff`](CITATION.cff) file is included,
 so GitHub shows a "Cite this repository" button. A Zenodo DOI for releases is planned.
 
 ## Installation
