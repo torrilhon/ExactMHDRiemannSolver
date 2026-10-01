@@ -13,7 +13,7 @@ Also see:
 > magnetohydrodynamics*, Journal of Plasma Physics **69**(3), 253–276 (2003),
 > doi:[10.1017/S0022377803002186](https://doi.org/10.1017/S0022377803002186).
 
-Version 0.1 computes **regular solutions**: fast and slow Lax shocks, fast and slow
+Version 0.1.0 computes **regular solutions**: fast and slow Lax shocks, fast and slow
 rarefaction fans, rotational (Alfvén) discontinuities and the contact; for a vanishing
 normal field it uses a quasi-Euler solver (see below). A solution is reported as
 `Success` only after it has passed a set of independent checks; inputs outside the
