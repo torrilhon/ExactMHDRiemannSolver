@@ -282,6 +282,12 @@ end
     @test r(bt(5e-5), bt(5e-5)).reason === :switch_on_off
     @test r(bt(2e-6), good).retcode != Unsupported
     @test r(bt(2e-4), bt(2e-6)).retcode != Unsupported
+    # inside the domain, just above the thresholds: the solution has a vanishingly weak fast
+    # fan, whose pointwise check must not report dense-output noise as a mismatch
+    for (bl, bs) in ((1e-4, 1e-6), (2e-4, 2e-6))
+        s = r(bt(bl), bt(bs))
+        @test s.retcode == Success && s.check.ok
+    end
     t = r(good, good)
     @test t.retcode == Success && t.reason === :trivial && sample(t, 0.3) ≈ good
     # strongly diverging flow: vacuum is approached, the solver refuses

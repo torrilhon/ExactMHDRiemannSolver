@@ -53,7 +53,11 @@ function fan_pointwise_defect(f::FanData, ctx::Ctx, F::Frame, γ)
         A = primitive_jacobian(W, γ)
         nq = maximum(abs, dq)
         nq > 0 || continue
-        d = max(d, maximum(abs, (A - λ * I) * dq) / (opnorm(A, Inf) * nq))
+        # dq of a vanishingly weak fan is as small as the noise of the dense output divided
+        # by h; measuring against a floor of 1e-6 of the state size keeps that noise from
+        # being reported as a mismatch (the defect of such a fan is bounded by its strength)
+        nfloor = 1e-6 * max(maximum(abs, prim7(W)), 1.0)
+        d = max(d, maximum(abs, (A - λ * I) * dq) / (opnorm(A, Inf) * max(nq, nfloor)))
     end
     return d
 end
