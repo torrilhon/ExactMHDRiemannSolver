@@ -186,7 +186,7 @@ result looks wrong.
 Run the tests with `julia --project=. test/runtests.jl` or `Pkg.test()`; the test
 suite covers a subset of the cases above.
 
-## Notes on the report
+## Notes on the SAM report 2002
 
 - Sec. 2.1 states twist angle α = 1/2, and Table 2 lists cos(0.5), sin(0.5); the
   tables and figures correspond to α = 1.5.
