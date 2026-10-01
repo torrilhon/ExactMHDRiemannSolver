@@ -1,5 +1,6 @@
 #!/usr/bin/env julia
 # Command-line front end:  julia --project=<pkg> bin/riemann.jl problem.toml [out.csv]
+# From the REPL:  include("bin/riemann.jl"); main(["problem.toml", "out.csv"])
 # File format: see `problem_load` (src/problemfile.jl) and examples/.
 using ExactMHDRiemannSolver
 
@@ -23,4 +24,7 @@ function main(args)
     return 0
 end
 
-exit(main(ARGS))
+# run only when called as a script, so that include() from the REPL does not exit Julia
+if abspath(PROGRAM_FILE) == @__FILE__
+    exit(main(ARGS))
+end
