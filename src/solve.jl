@@ -133,6 +133,7 @@ end
 function _solve(prob::RiemannProblem, opts::SolverOptions, guess)
     rc, reason = validate_input(prob, opts)
     rc == Success || return failed(prob, rc, reason)
+    reason === :quasi_euler && return solve_perpendicular(prob, opts)
     F = make_frame(prob.L, prob.R)
     Lc, Rc = canonical_states(prob.L, prob.R, F)
     UL, UR = to_hstate(Lc), to_hstate(Rc)

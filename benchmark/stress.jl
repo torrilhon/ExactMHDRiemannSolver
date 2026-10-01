@@ -15,7 +15,7 @@ function gen(rng, i)
 end
 rng = MersenneTwister(7)
 counts = Dict{String,Int}(); worst = 0.0; tmax = 0.0; bad = Int[]
-for i in 1:parse(Int, ARGS[1])
+for i in 1:(isempty(ARGS) ? 1000 : parse(Int, ARGS[1]))
     L, R, γ = gen(rng, i)            # every 5th problem is coplanar
     t = @elapsed sol = solve(RiemannProblem(L, R; γ))
     i > 1 && (global tmax = max(tmax, t))

@@ -69,7 +69,7 @@ Return codes:
 | --- | --- |
 | `Success` | converged, all independent checks passed |
 | `InvalidInput` | non-finite values, ρ ≤ 0, p ≤ 0, γ ≤ 1, or Bx differs between the states |
-| `Unsupported` | outside the v0.1 domain: `:perpendicular` (Bn ≈ 0), `:switch_on_off` (Bt/√p below the thresholds below), `:extreme_ratio` |
+| `Unsupported` | outside the v0.1 domain: `:switch_on_off` (Bt/√p below the thresholds below), `:extreme_ratio` |
 | `RegularLimit` | the solution needs a limit of the regular waves: `:vacuum`, `:fast_switch_off`, `:slow_limit` (a compound or intermediate wave would be needed), `:bt_small` |
 | `NoConvergence` | no solution found from any start, including the homotopy |
 | `CheckFailed` | converged but failed the independent checks; please report it |
@@ -78,7 +78,7 @@ All thresholds are fields of `SolverOptions`, in units of √p of the state conc
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `bn_min` | 1e-3 | minimum Bn/√p of both input states |
+| `bn_euler` | 1e-10 | Bn/√p (both states) at or below which the quasi-Euler solver is used |
 | `bt_min_larger` | 1e-4 | minimum Bt/√p of the input state with the larger value |
 | `bt_min_smaller` | 1e-6 | minimum Bt/√p of the input state with the smaller value |
 | `bt_floor` | 1e-8 | minimum Bt/√p of every middle state; below it the result is `RegularLimit` |
@@ -86,7 +86,17 @@ All thresholds are fields of `SolverOptions`, in units of √p of the state conc
 
 So one side may carry an almost vanishing transverse field as long as the other one
 does not; with both sides small the solver gives up more often (as `NoConvergence`,
-never with a wrong answer).
+never with a wrong answer). The Bt thresholds apply only to the regular solver: with
+Bn/√p ≤ `bn_euler` any Bt is accepted, including Bt = 0 on one or both sides.
+
+**Vanishing normal field.** For Bn/√p ≤ 1e-10 the problem is solved as Bn = 0
+(`sol.method === :quasi_euler`). The slow and Alfvén waves then merge with the contact
+into a tangential discontinuity (u and p + Bt²/2 continuous; ρ, p, Bt and vt may jump),
+and the two fast waves are gas-dynamic waves with Bt/ρ, the direction of Bt and vt
+constant and c_f² = (γp + Bt²)/ρ. This system is genuinely nonlinear for every Bt, so
+the only limit is vacuum (`RegularLimit :vacuum`). The single unknown is the total
+pressure at the contact, found by bracketing. At Bn/√p = 1e-10 the regular solver and
+the quasi-Euler solver agree to better than 1e-8.
 
 ## How it works
 
@@ -140,6 +150,9 @@ and the checks, so they cannot disagree.
   to 1e-6: for a > c_A at least 29/30 `Success` in every setting; for c_A > a 27/30
   (3 genuine vacuum limits) while the larger side is ≥ 1e-3, and 24–25/30 when it is
   3e-4 or 1e-4, the rest ending as `NoConvergence`. Worst check error 1.2e-11.
+- Bn = 0: Sod's problem matches Toro (p* = 0.30313, u* = 0.92745); 3800 random
+  perpendicular problems with Bt/√p from 0 to 1e3 and ratios up to 1:10⁴: all
+  `Success` except genuine vacuum cases.
 - Invariance under Galilean shifts, transverse rotations, B → −B and x → −x.
 
 Run the tests with `julia --project=. test/runtests.jl` (about 60 s after compilation)
@@ -155,10 +168,7 @@ or `Pkg.test()`.
 
 ## Roadmap
 
-- Bn → 0: below a small threshold switch to a quasi-Euler solver (fast waves and a
-  tangential discontinuity); the regular solver itself stays accurate down to
-  Bn/√p ≈ 1e-8.
-- Later: intermediate and compound waves.
+- Intermediate and compound waves (Bt → 0 on both sides, switch-on/off, 180° problems).
 
 ## License
 

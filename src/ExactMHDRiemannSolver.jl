@@ -32,6 +32,7 @@ include("shocks.jl")
 include("fans.jl")
 include("side.jl")
 include("check.jl")
+include("perpendicular.jl")
 include("solve.jl")
 include("output.jl")
 

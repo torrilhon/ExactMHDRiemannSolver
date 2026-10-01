@@ -21,7 +21,7 @@ All thresholds of the solver in one place. Quantities are in canonical units
 (ρ_L = p_L = 1, velocities in √(p_L/ρ_L), B in √p_L).
 """
 Base.@kwdef struct SolverOptions
-    bn_min::Float64 = 1e-3        # min Bn/√p of both input states
+    bn_euler::Float64 = 1e-10     # Bn/√p at or below which the quasi-Euler solver (Bn = 0) is used
     bt_min_larger::Float64 = 1e-4   # min Bt/√p of the input state with the larger value
     bt_min_smaller::Float64 = 1e-6  # min Bt/√p of the input state with the smaller value
     bt_floor::Float64 = 1e-8        # min Bt/√p of all middle states (else RegularLimit)

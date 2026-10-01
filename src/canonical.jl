@@ -74,16 +74,15 @@ function validate_input(prob::RiemannProblem, opts::SolverOptions)
     (L[1] > 0 && R[1] > 0) || return (InvalidInput, :density)
     (L[8] > 0 && R[8] > 0) || return (InvalidInput, :pressure)
     abs(L[5] - R[5]) <= 1e-12 * max(abs(L[5]), 1.0) || return (InvalidInput, :bn_jump)
-    for W in (L, R)
-        abs(W[5]) / sqrt(W[8]) >= opts.bn_min || return (Unsupported, :perpendicular)
-    end
+    rr, pr = R[1] / L[1], R[8] / L[8]
+    (1 / opts.ratio_max <= rr <= opts.ratio_max && 1 / opts.ratio_max <= pr <= opts.ratio_max) ||
+        return (Unsupported, :extreme_ratio)
+    # vanishing normal field: quasi-Euler solver, any Bt (including 0) is fine
+    max(abs(L[5]) / sqrt(L[8]), abs(R[5]) / sqrt(R[8])) <= opts.bn_euler && return (Success, :quasi_euler)
     # transverse field: one side may be very small as long as the other is not
     btL, btR = btp(L), btp(R)
     tolr = 1 - 1e-12        # a value set exactly at a threshold must not be refused by round-off
     (min(btL, btR) >= tolr * opts.bt_min_smaller && max(btL, btR) >= tolr * opts.bt_min_larger) ||
         return (Unsupported, :switch_on_off)
-    rr, pr = R[1] / L[1], R[8] / L[8]
-    (1 / opts.ratio_max <= rr <= opts.ratio_max && 1 / opts.ratio_max <= pr <= opts.ratio_max) ||
-        return (Unsupported, :extreme_ratio)
     return (Success, :none)
 end

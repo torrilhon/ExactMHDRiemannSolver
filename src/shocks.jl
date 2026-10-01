@@ -22,31 +22,31 @@ end
 #   c3 y³ + c2 y² + c1 y + c0 = 0,
 #   c3 = -B²(k-1),  c2 = A(2D - X(k-1)),
 #   c1 = -D(A²(k+1) + 2Dk - 2X(k-1) + 2(k+1)),  c0 = 2 A D² k,
-# whose largest real root is the fast shock. Unlike the cubic in v̂ (paper eq. 73) this
+# whose largest real root in the physical range 0 < y ≤ √(A² + 2(1+X)) (p̂ ≥ 0) is the
+# fast shock. Unlike the cubic in v̂ (paper eq. 73) this
 # stays well conditioned near switch-on (A → 0 with c_A > a): there the root tends to
 # the switch-on value of eq. (75) instead of approaching the pole v̂ = B²/X.
 @inline fast_cubic_bt(A, B2, X, D, k) =
     (2 * A * D^2 * k, -D * (A^2 * (k + 1) + 2 * D * k - 2 * X * (k - 1) + 2 * (k + 1)),
      A * (2 * D - X * (k - 1)), -B2 * (k - 1))
 
-# Largest real root of a real cubic with c3 ≠ 0, by bracketing on its last monotone
-# interval (never fails, no complex arithmetic).
-function largest_real_root(c::NTuple{4,Float64})
+# Largest real root of a real cubic in the interval (lo, hi], by bracketing on its
+# monotone pieces (no complex arithmetic). The interval matters when Bn → 0: then the
+# leading coefficient c3 ∝ B² vanishes and a spurious root of size ~1/B² appears far
+# outside the physical range.
+function largest_root_in(c::NTuple{4,Float64}, lo::Float64, hi::Float64)
     c0, c1, c2, c3 = c
     f(x) = evalpoly(x, c)
-    bound = 1 + max(abs(c0), abs(c1), abs(c2)) / abs(c3)          # Cauchy bound
-    # critical points: 3c3 x² + 2c2 x + c1 = 0
-    disc = c2^2 - 3 * c3 * c1
-    crit = disc > 0 ? sort([(-c2 - sqrt(disc)) / (3c3), (-c2 + sqrt(disc)) / (3c3)]) : Float64[]
-    pts = [-bound; filter(x -> -bound < x < bound, crit); bound]
+    disc = c2^2 - 3 * c3 * c1                      # critical points of the cubic
+    crit = disc > 0 ? [(-c2 - sqrt(disc)) / (3c3), (-c2 + sqrt(disc)) / (3c3)] : Float64[]
+    pts = sort([lo; filter(x -> lo < x < hi, crit); hi])
     for i in length(pts)-1:-1:1
         a, b = pts[i], pts[i+1]
         fa, fb = f(a), f(b)
         fb == 0 && return b
         fa * fb < 0 && return find_zero(f, (a, b), Roots.Brent(); xatol = 0.0, xrtol = 4eps())
-        fa == 0 && return a
     end
-    throw(DomainError(c, "cubic without real root"))   # impossible for a real cubic
+    throw(DomainError(c, "fast shock: no root of the Hugoniot cubic in the physical range"))
 end
 
 """
@@ -71,7 +71,9 @@ function fast_shock(U::HState, ψ, σ::Int, ctx::Ctx)
     X = B^2 + D
     M = sqrt(X / γ)
     c = fast_cubic_bt(A, B^2, X, D, κ)
-    y0 = largest_real_root(fvalue.(c))
+    # physical range of the downstream field: 0 < y and p̂ ≥ 0, i.e. y² ≤ A² + 2(1 + X)
+    yhi = sqrt(fvalue(A)^2 + 2 * (1 + fvalue(X))) * (1 + 1e-12)
+    y0 = largest_root_in(fvalue.(c), 1e-300, yhi)
     y = ift_polish(x -> evalpoly(x, c), x -> evalpoly(x, fvalue.(c)), y0)
     t = D * (y - A) / (X * y)                    # 1 - v̂
     ph = 1 + X * t - (y^2 - A^2) / 2
@@ -113,7 +115,9 @@ function slow_shock_state(U::HState, Δ, σ::Int, ctx::Ctx)
     Bth = A - Δ
     v, X = slow_volume(Δ, A, B2, κ)
     M = sqrt(X / γ)
-    ph = slow_pH(v, Bth, A, κ)
+    # momentum balance (Rayleigh line) instead of the Hugoniot form slow_pH: the latter
+    # divides by 1 - κ v̂, which vanishes when Bn → 0 makes the slow shock maximally compressive
+    ph = 1 - X * (v - 1) - (Bth^2 - A^2) / 2
     bt1 = Bth * sp
     Cc = -σ * Bn / (U.ρ * a0 * M)
     e = SVector(cos(U.φ), sin(U.φ))

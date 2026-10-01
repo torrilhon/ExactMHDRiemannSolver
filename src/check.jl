@@ -30,10 +30,13 @@ function fan_eigen_integrate(W0, ρ1, fam, γ)
     return SVector(q[1], q[2], q[3], q[4], W0[5], q[5], q[6], q[7])
 end
 
-# relative separation of a fan's family speed from the Alfvén speed
+# distance of a fan's family speed to the nearest other characteristic speed, relative
+# to the fast speed (the scale of the Jacobian): numerical eigenvectors are only
+# reliable when this is not small. For the slow family both the Alfvén speed and the
+# contact (cs → 0 as Bn → 0) count.
 function speed_gap(W, γ, kind)
     cf, cA, cs = speeds(W, γ)
-    return kind === :fast_fan ? (cf^2 - cA^2) / cf^2 : (cA^2 - cs^2) / cA^2
+    return kind === :fast_fan ? (cf - cA) / cf : min(cA - cs, cs) / cf
 end
 
 prim7(W) = SVector(W[1], W[2], W[3], W[4], W[6], W[7], W[8])
@@ -72,7 +75,7 @@ function check_waves(waves::Vector{Wave}, ctx::Ctx, F::Frame, γ)
         sl, sr = speed_to_user(wv.s_left, F), speed_to_user(wv.s_right, F)
         σ = wv.side
         Wup, Wdn = σ < 0 ? (Wl, Wr) : (Wr, Wl)
-        if wv.kind in (:fast_shock, :slow_shock, :rotation, :contact)
+        if wv.kind in (:fast_shock, :slow_shock, :rotation, :contact, :tangential)
             s = sl
             rh = s * (conserved(Wr, γ) - conserved(Wl, γ)) - (flux(Wr, γ) - flux(Wl, γ))
             scale = max(maximum(abs, flux(Wl, γ)), maximum(abs, flux(Wr, γ)), abs(s) * maximum(abs, conserved(Wl, γ)), 1.0)
@@ -95,6 +98,13 @@ function check_waves(waves::Vector{Wave}, ctx::Ctx, F::Frame, γ)
             e = max(e, abs(sl - (Wl[2] + σ * cA)) / max(abs(sl), 1.0))
             maxerr = max(maxerr, e)
             note(e <= tol, "wave $i (rotation): not a rotational discontinuity ($e)")
+        elseif wv.kind === :tangential
+            # Bn = 0: u and total pressure continuous, everything else may jump
+            Pl = Wl[8] + (Wl[6]^2 + Wl[7]^2) / 2; Pr = Wr[8] + (Wr[6]^2 + Wr[7]^2) / 2
+            e = max(abs(Wl[2] - Wr[2]) / max(1.0, abs(Wl[2])), abs(Pl - Pr) / max(Pl, Pr))
+            maxerr = max(maxerr, e)
+            note(e <= tol, "tangential discontinuity: jump in u or total pressure of $e")
+            note(abs(sl - Wl[2]) <= tol * max(1.0, abs(sl)), "tangential discontinuity: speed differs from flow speed")
         elseif wv.kind === :contact
             e = relerr(Wl[2:8], Wr[2:8])
             maxerr = max(maxerr, e)

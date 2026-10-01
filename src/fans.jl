@@ -94,6 +94,9 @@ function fan_state(f::FanData, τ, ctx::Ctx)
     if f.family === :fast
         s, u, w = y
         return HState(U.ρ * exp(-s), u, U.p * exp(-ctx.γ * s), U.bt * exp(f.par * τ), U.φ, U.vt + w * e)
+    elseif f.family === :fast0          # quasi-Euler fan (Bn = 0): s = s* τ, Bt ∝ ρ
+        s = f.par * τ
+        return HState(U.ρ * exp(-s), y[1], U.p * exp(-ctx.γ * s), U.bt * exp(-s), U.φ, U.vt)
     else
         s, u, bt, w = y
         return HState(U.ρ * exp(-s), u, U.p * exp(-ctx.γ * s), bt, U.φ, U.vt + w * e)
@@ -104,5 +107,5 @@ end
 function fan_speed(f::FanData, τ, ctx::Ctx)
     h = fan_state(f, τ, ctx)
     cf, _, cs = speeds(h, ctx)
-    return h.u + f.σ * (f.family === :fast ? cf : cs)
+    return h.u + f.σ * (f.family === :slow ? cs : cf)
 end

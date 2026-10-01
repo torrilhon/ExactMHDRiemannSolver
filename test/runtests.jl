@@ -211,6 +211,57 @@ end
     end
 end
 
+@testset "small normal field (refusal switched off)" begin
+    opts = SolverOptions(bn_euler = 0.0)      # force the regular solver
+    # fast shock with Bn/√p = 1e-9: the cubic's leading coefficient ∝ B² nearly vanishes
+    ctx = E.Ctx(5 / 3, 1e-9, opts)
+    U = E.HState(1.0, 0.0, 1.0, 0.8, 0.0, SVector(0.0, 0.0))
+    for ψ in (1e-6, 0.1, 1.0)
+        D, s = E.fast_shock(U, ψ, 1, ctx)
+        @test rh_defect(E.to_prim(U, ctx), E.to_prim(D, ctx), s, 5 / 3) < 1e-13
+    end
+    P = readdlm(joinpath(DATA, "random_problems.csv"), ',')
+    for i in (15, 18, 27), bn in (1e-7, 1e-9, 1e-10)
+        L, R = copy(P[i, 2:9]), copy(P[i, 10:17]); b = bn * sqrt(min(L[8], R[8])); L[5] = b; R[5] = b
+        @test solve(RiemannProblem(L, R); opts).retcode == Success
+    end
+end
+
+@testset "quasi-Euler solver (Bn = 0)" begin
+    # Sod (Toro, Riemann Solvers, Table 4.2 test 1): pure gas dynamics
+    sol = solve(RiemannProblem([1.0, 0, 0, 0, 0, 0, 0, 1], [0.125, 0, 0, 0, 0, 0, 0, 0.1]; γ = 1.4))
+    @test sol.retcode == Success && sol.method === :quasi_euler
+    T = wavetable(sol)
+    @test T[2].p ≈ 0.30313 atol = 1e-5
+    @test T[2].vx ≈ 0.92745 atol = 1e-5
+    @test T[1].ρ ≈ 0.42632 atol = 1e-5
+    @test T[2].ρ ≈ 0.26557 atol = 1e-5
+    @test T[3].s_left ≈ 1.75216 atol = 1e-5
+    # any Bt is fine when Bn = 0, including Bt = 0 on one or both sides
+    rng = MersenneTwister(5)
+    for _ in 1:200
+        st() = [0.2 + 3rand(rng), 2rand(rng) - 1, rand(rng) - 0.5, rand(rng) - 0.5, 0.0,
+                rand(rng, (0.0, 1e-8, 1.0)) * (2rand(rng) - 1), rand(rng, (0.0, 1.0)) * (2rand(rng) - 1), 0.2 + 3rand(rng)]
+        sol = solve(RiemannProblem(st(), st(); γ = rand(rng, (1.4, 5 / 3, 2.0))))
+        @test sol.retcode in (Success, RegularLimit)
+        sol.retcode == RegularLimit && @test sol.reason === :vacuum
+        sol.retcode == Success && @test check(sol).ok
+    end
+    # continuity at the switch: regular solver just above Bn/√p = 1e-10, quasi-Euler at it
+    P = readdlm(joinpath(DATA, "random_problems.csv"), ',')
+    for i in 1:5
+        L, R = copy(P[i, 2:9]), copy(P[i, 10:17]); b = sqrt(min(L[8], R[8]))
+        L[5] = R[5] = 2e-10 * b; s1 = solve(RiemannProblem(L, R))
+        L[5] = R[5] = 1e-10 * b; s2 = solve(RiemannProblem(L, R))
+        @test s1.method !== :quasi_euler && s2.method === :quasi_euler
+        f1 = wavetable(s1); f2 = wavetable(s2)
+        @test abs(f1[1].s_left - f2[1].s_left) < 1e-8 && abs(f1[end].s_right - f2[end].s_right) < 1e-8
+        c1 = only(filter(r -> r.kind === :contact, f1)); c2 = only(filter(r -> r.kind === :tangential, f2))
+        @test abs(c1.s_left - c2.s_left) < 1e-8                           # u* agrees
+        @test abs((c1.p + (c1.By^2 + c1.Bz^2) / 2) - (c2.p + (c2.By^2 + c2.Bz^2) / 2)) < 1e-8   # P* agrees
+    end
+end
+
 @testset "rejection policy" begin
     good = [1.0, 0, 0, 0, 1.0, 1.0, 0, 1.0]
     r(L, R; kw...) = solve(RiemannProblem(L, R; kw...))
@@ -220,7 +271,7 @@ end
     @test r(good, good; γ = 1.0).retcode == InvalidInput
     @test r(good, [1.0, 0, 0, 0, 2.0, 1.0, 0, 1.0]).reason === :bn_jump
     @test r([1.0, 0, 0, 0, 0.7, 0, 0, 1.0], [0.3, 0, 0, 1, 0.7, 1, 0, 0.2]).reason === :switch_on_off   # RJ4d type
-    @test r([1.0, 0, 0, 0, 0, 1, 0, 1.0], [0.125, 0, 0, 0, 0, 0.5, 0, 0.1]).reason === :perpendicular
+    @test r([1.0, 0, 0, 0, 0, 1, 0, 1.0], [0.125, 0, 0, 0, 0, 0.5, 0, 0.1]).method === :quasi_euler
     @test r(good, [1e-7, 0, 0, 0, 1.0, 1.0, 0, 1.0]).reason === :extreme_ratio
     # transverse-field thresholds: smaller side ≥ 1e-6, larger side ≥ 1e-4 (units of √p)
     bt(b) = [1.0, 0, 0, 0, 1.0, b, 0, 1.0]
