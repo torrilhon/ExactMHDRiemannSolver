@@ -48,6 +48,18 @@ sample(sol, 0.25)      # state at x/t = 0.25
 write_csv("paper.csv", sol; t = 0.4, x = range(-1, 1; length = 2001))
 ```
 
+The same problem as a file (`examples/` also has Brio–Wu); `problem_load` returns the
+states, γ and the output time and grid of the file:
+
+```julia
+L, R, γ, t, x = problem_load("examples/paper.toml")
+sol = solve(RiemannProblem(L, R; γ))
+write_csv("paper.csv", sol; t, x)
+```
+
+A relative path is looked up in the current directory first, then in the package
+directory, so the bundled examples load from anywhere.
+
 From the command line:
 
 ```
@@ -65,6 +77,7 @@ julia --project=. bin/riemann.jl examples/paper.toml out.csv
 | `wavetable(sol)` | one row per wave: kind, speeds, state right of it |
 | `write_csv(path, sol; t, x)` | sampled solution as CSV |
 | `check(sol)` | re-run the independent checks |
+| `problem_load(path)` | read a problem file (TOML, format in `examples/`): `(; L, R, γ, t, x)` |
 
 Return codes:
 

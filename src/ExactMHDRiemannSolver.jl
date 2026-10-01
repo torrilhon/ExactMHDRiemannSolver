@@ -22,10 +22,11 @@ using Roots
 using NonlinearSolve
 using OrdinaryDiffEqVerner
 using SciMLBase
+using TOML
 
 export RiemannProblem, SolverOptions, RiemannSolution, RetCode
 export Success, InvalidInput, Unsupported, RegularLimit, NoConvergence, CheckFailed
-export solve, sample, wavetable, write_csv, check, successful
+export solve, sample, wavetable, write_csv, check, successful, problem_load
 
 include("types.jl")
 include("eos.jl")
@@ -37,5 +38,6 @@ include("check.jl")
 include("perpendicular.jl")
 include("solve.jl")
 include("output.jl")
+include("problemfile.jl")
 
 end

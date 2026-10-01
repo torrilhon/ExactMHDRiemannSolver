@@ -306,4 +306,24 @@ end
     @test check(sol).ok
 end
 
+@testset "problem files" begin
+    # relative paths fall back to the package directory, so this works from any cwd
+    L, R, γ, t, x = problem_load("examples/paper.toml")
+    @test L == [3.0, 0, 0, 0, 1.5, 1.0, 0, 3.0] && R[6] ≈ cos(1.5) && R[7] ≈ sin(1.5)
+    @test γ ≈ 5 / 3 && t == 0.4 && x == range(-1, 1; length = 2001)
+    @test solve(RiemannProblem(L, R; γ)).retcode == Success
+    bw = problem_load(joinpath(pkgdir(ExactMHDRiemannSolver), "examples", "briowu.toml"))
+    @test bw.γ == 2.0 && bw.R == [0.125, 0, 0, 0, 0.75, -1.0, 0, 0.1] && bw.x[1] == -0.5
+    # defaults and errors
+    f = tempname() * ".toml"
+    write(f, "left = [1, 0, 0, 0, 1, 1, 0, 1]\nright = [1, 0, 0, 0, 1, 1, 0, 1]\n")
+    p = problem_load(f)
+    @test p.γ ≈ 5 / 3 && p.t == 1.0 && length(p.x) == 2001 && eltype(p.L) == Float64
+    write(f, "left = [1, 0, 0]\nright = [1, 0, 0, 0, 1, 1, 0, 1]\n")
+    @test_throws ArgumentError problem_load(f)
+    write(f, "left = [1, 0, 0, 0, 1, 1, 0, 1]\n")
+    @test_throws ArgumentError problem_load(f)
+    @test_throws ArgumentError problem_load("no/such/file.toml")
+end
+
 end
