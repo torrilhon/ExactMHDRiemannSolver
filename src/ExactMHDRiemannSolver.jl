@@ -5,9 +5,11 @@ Exact solver for Riemann problems of 1D ideal magnetohydrodynamics (γ-law gas),
 following M. Torrilhon, "Exact Solver and Uniqueness Conditions for Riemann
 Problems of Ideal Magnetohydrodynamics", SAM Research Report 2002-06, ETH Zürich.
 
-Version 0.1 computes regular solutions only (fast/slow Lax shocks, fast/slow fans,
-rotational discontinuities, contact). Every returned solution is checked
-independently; inputs outside the supported domain are refused with a reason.
+Version 0.1 computes regular solutions (fast/slow Lax shocks, fast/slow fans,
+rotational discontinuities, contact) and, for a vanishing normal field, the
+quasi-Euler solution (fast waves and a tangential discontinuity). Returned
+solutions are checked independently; inputs outside the supported domain are
+refused with a reason.
 """
 module ExactMHDRiemannSolver
 

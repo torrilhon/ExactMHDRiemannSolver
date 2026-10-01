@@ -100,8 +100,6 @@ end
     return 1 - D * z, B2 / (1 + (A - D) * z)
 end
 
-@inline slow_pH(v, Bth, A, κ) = (v - κ + (Bth - A)^2 * (v - 1) / 2) / (1 - κ * v)
-
 """
     slow_shock_state(U, Δ, σ, ctx) -> (downstream, speed, M, v̂)
 
@@ -115,7 +113,7 @@ function slow_shock_state(U::HState, Δ, σ::Int, ctx::Ctx)
     Bth = A - Δ
     v, X = slow_volume(Δ, A, B2, κ)
     M = sqrt(X / γ)
-    # momentum balance (Rayleigh line) instead of the Hugoniot form slow_pH: the latter
+    # momentum balance (Rayleigh line) instead of the Hugoniot form of p̂: the latter
     # divides by 1 - κ v̂, which vanishes when Bn → 0 makes the slow shock maximally compressive
     ph = 1 - X * (v - 1) - (Bth^2 - A^2) / 2
     bt1 = Bth * sp

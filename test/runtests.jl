@@ -247,12 +247,15 @@ end
         sol.retcode == RegularLimit && @test sol.reason === :vacuum
         sol.retcode == Success && @test check(sol).ok
     end
-    # continuity at the switch: regular solver just above Bn/√p = 1e-10, quasi-Euler at it
+    # colliding flows so strong that P*/P exceeds double precision: refused, not thrown
+    v = solve(RiemannProblem([1.0, 1e8, 0, 0, 0, 1, 0, 1], [1.0, -1e8, 0, 0, 0, 1, 0, 1]))
+    @test v.retcode == NoConvergence && v.method === :quasi_euler
+    # continuity at the switch: regular solver just above Bn/√p = 1e-10, quasi-Euler just below
     P = readdlm(joinpath(DATA, "random_problems.csv"), ',')
     for i in 1:5
         L, R = copy(P[i, 2:9]), copy(P[i, 10:17]); b = sqrt(min(L[8], R[8]))
         L[5] = R[5] = 2e-10 * b; s1 = solve(RiemannProblem(L, R))
-        L[5] = R[5] = 1e-10 * b; s2 = solve(RiemannProblem(L, R))
+        L[5] = R[5] = 0.9e-10 * b; s2 = solve(RiemannProblem(L, R))
         @test s1.method !== :quasi_euler && s2.method === :quasi_euler
         f1 = wavetable(s1); f2 = wavetable(s2)
         @test abs(f1[1].s_left - f2[1].s_left) < 1e-8 && abs(f1[end].s_right - f2[end].s_right) < 1e-8

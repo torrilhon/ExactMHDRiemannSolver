@@ -8,14 +8,16 @@ Exact solutions of Riemann problems of one-dimensional ideal magnetohydrodynamic
 > ETH Zürich (2002).
 
 Version 0.1 computes **regular solutions**: fast and slow Lax shocks, fast and slow
-rarefaction fans, rotational (Alfvén) discontinuities and the contact. Every solution
-it returns has been checked independently; inputs it cannot handle safely are refused
-with a stated reason.
+rarefaction fans, rotational (Alfvén) discontinuities and the contact; for a vanishing
+normal field it uses a quasi-Euler solver (see below). A solution is reported as
+`Success` only after it has passed a set of independent checks; inputs outside the
+supported domain are refused with a stated reason. Intermediate and compound waves are
+not computed yet.
 
 ## How to cite
 
 If you use this code, please cite the report above. A `CITATION.cff` file is included,
-so GitHub shows a "Cite this repository" button; releases will carry a Zenodo DOI.
+so GitHub shows a "Cite this repository" button. A Zenodo DOI for releases is planned.
 
 ## Installation
 
@@ -26,8 +28,9 @@ using Pkg
 Pkg.add(url = "https://github.com/torrilhon/ExactMHDRiemannSolver")
 ```
 
-Julia 1.10 or newer. The first call compiles the nonlinear and ODE solvers (about
-20 s); afterwards a solve takes a few milliseconds.
+Julia 1.10 or newer. The first call compiles the nonlinear and ODE solvers, which can
+take tens of seconds. After that, typical problems solve in milliseconds; problems that
+need the homotopy fallback take longer, bounded by `time_limit`.
 
 ## Quick start
 
@@ -56,9 +59,9 @@ julia --project=. bin/riemann.jl examples/paper.toml out.csv
 | Function | Purpose |
 | --- | --- |
 | `RiemannProblem(L, R; γ = 5/3)` | problem; states are primitive 8-vectors (ρ, vx, vy, vz, Bx, By, Bz, p), Bx equal on both sides |
-| `solve(prob; opts = SolverOptions(), guess = nothing)` | solve; never throws for physical reasons |
+| `solve(prob; opts = SolverOptions(), guess = nothing)` | solve; reports failures through `retcode` instead of throwing |
 | `sol.retcode`, `sol.reason` | outcome, see below |
-| `sample(sol, ξ)`, `sample(sol, x, t)` | exact state at ξ = x/t, fans included |
+| `sample(sol, ξ)`, `sample(sol, x, t)` | state at ξ = x/t; fan interiors from the dense ODE output |
 | `wavetable(sol)` | one row per wave: kind, speeds, state right of it |
 | `write_csv(path, sol; t, x)` | sampled solution as CSV |
 | `check(sol)` | re-run the independent checks |
@@ -71,7 +74,7 @@ Return codes:
 | `InvalidInput` | non-finite values, ρ ≤ 0, p ≤ 0, γ ≤ 1, or Bx differs between the states |
 | `Unsupported` | outside the v0.1 domain: `:switch_on_off` (Bt/√p below the thresholds below), `:extreme_ratio` |
 | `RegularLimit` | the solution needs a limit of the regular waves: `:vacuum`, `:fast_switch_off`, `:slow_limit` (a compound or intermediate wave would be needed), `:bt_small` |
-| `NoConvergence` | no solution found from any start, including the homotopy |
+| `NoConvergence` | no solution found from any start, including the homotopy; for Bn ≈ 0 also a shock too strong for double precision (P*/P ≳ 1e14) |
 | `CheckFailed` | converged but failed the independent checks; please report it |
 
 All thresholds are fields of `SolverOptions`, in units of √p of the state concerned:
@@ -85,8 +88,8 @@ All thresholds are fields of `SolverOptions`, in units of √p of the state conc
 | `time_limit` | 5 s | wall-clock budget of the homotopy fallback |
 
 So one side may carry an almost vanishing transverse field as long as the other one
-does not; with both sides small the solver gives up more often (as `NoConvergence`,
-never with a wrong answer). The Bt thresholds apply only to the regular solver: with
+does not; with both sides small the solver gives up more often. In the tests below
+such cases ended as `NoConvergence`, not as solutions that failed the checks. The Bt thresholds apply only to the regular solver: with
 Bn/√p ≤ `bn_euler` any Bt is accepted, including Bt = 0 on one or both sides.
 
 **Vanishing normal field.** For Bn/√p ≤ 1e-10 the problem is solved as Bn = 0
@@ -94,9 +97,10 @@ Bn/√p ≤ `bn_euler` any Bt is accepted, including Bt = 0 on one or both sides
 into a tangential discontinuity (u and p + Bt²/2 continuous; ρ, p, Bt and vt may jump),
 and the two fast waves are gas-dynamic waves with Bt/ρ, the direction of Bt and vt
 constant and c_f² = (γp + Bt²)/ρ. This system is genuinely nonlinear for every Bt, so
-the only limit is vacuum (`RegularLimit :vacuum`). The single unknown is the total
-pressure at the contact, found by bracketing. At Bn/√p = 1e-10 the regular solver and
-the quasi-Euler solver agree to better than 1e-8.
+no regular-wave limit other than vacuum (`RegularLimit :vacuum`) can occur. The single
+unknown is the total pressure at the contact, found by bracketing. In the test cases,
+the regular solver just above Bn/√p = 1e-10 and the quasi-Euler solver just below
+agree to within 1e-8 in the outer wave speeds, u* and the total pressure P*.
 
 ## How it works
 
@@ -116,9 +120,9 @@ the quasi-Euler solver agree to better than 1e-8.
      ς = s_vac·tanh(−ψ/s_vac); this is s for ordinary fans and Bt near switch-on, where
      Bt grows like √s.
 3. **Kernels.** The fast-shock Hugoniot is written as a cubic in the downstream
-   transverse field (after dividing out the trivial root); its largest real root is the
-   fast shock, found by bracketing. Unlike the cubic in v̂ of the report, it stays
-   accurate to machine precision near switch-on. The slow-shock quadratic is rewritten for
+   transverse field (after dividing out the trivial root); its largest real root in the
+   physical range is the fast shock, found by bracketing. Unlike the cubic in v̂ of the
+   report, it stays well conditioned near switch-on. The slow-shock quadratic is rewritten for
    t = 1 − v̂ so it stays well conditioned for weak shocks. Fans are integrated with
    OrdinaryDiffEq (Vern9, tolerance 1e-12); where c_s ≈ c_A the slow-fan equations use
    (c_A² − c_s²) = c_A² B_t²/(ρ(c_f² − c_A²)) to avoid cancellation. Derivatives through root finders use the
@@ -138,13 +142,17 @@ and the checks, so they cannot disagree.
 
 ## Validation
 
+The figures below are from the author's test runs for v0.1. They describe the tested
+cases, not guarantees for arbitrary input; please report any problem where a `Success`
+result looks wrong.
+
 - Reproduces Tables 1–2 of the report (twist angle 1.5) to the printed digits.
 - Brio–Wu (γ = 2), Ryu–Jones 1a and 2a agree with reference solutions.
 - 2000 random non-planar problems: all `Success`; 355 of them agree with independently
   computed reference solutions (`test/data`, 8 decimals) to 1.3e-8.
 - A harder stress set of 1000 problems (field ratios up to 1:300, density and pressure
   ratios up to 1:100, strong flows, 20 % coplanar, γ ∈ {1.4, 5/3, 2}): 97.8 % `Success`,
-  2.2 % `RegularLimit` (vacuum generation), no `NoConvergence`, no wrong answers.
+  2.2 % `RegularLimit` (vacuum generation), no `NoConvergence` and no `CheckFailed`.
 - Small transverse field, 30 random problems per setting, both regimes c_A ≷ a on the
   small side, larger side Bt/√p from 1e-2 down to 1e-4 and smaller side from 1e-4 down
   to 1e-6: for a > c_A at least 29/30 `Success` in every setting; for c_A > a 27/30
@@ -152,11 +160,11 @@ and the checks, so they cannot disagree.
   3e-4 or 1e-4, the rest ending as `NoConvergence`. Worst check error 1.2e-11.
 - Bn = 0: Sod's problem matches Toro (p* = 0.30313, u* = 0.92745); 3800 random
   perpendicular problems with Bt/√p from 0 to 1e3 and ratios up to 1:10⁴: all
-  `Success` except genuine vacuum cases.
+  `Success` except cases that generate vacuum.
 - Invariance under Galilean shifts, transverse rotations, B → −B and x → −x.
 
-Run the tests with `julia --project=. test/runtests.jl` (about 60 s after compilation)
-or `Pkg.test()`.
+Run the tests with `julia --project=. test/runtests.jl` or `Pkg.test()`; the test
+suite covers a subset of the cases above.
 
 ## Notes on the report
 

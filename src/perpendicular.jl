@@ -42,7 +42,10 @@ function perp_shock(U::HState, P, σ::Int, ctx::Ctx)
         return ((1 - v) * (A * r - A)^2 / 4 + 1 / (γ - 1) - (v - 1) / 2) / (v / (γ - 1) + (v - 1) / 2)
     end
     f(r) = U.p * ph(r) + (U.bt * r)^2 / 2 - P
-    r = find_zero(f, (1.0, κ * (1 - 1e-14)), Roots.Brent(); xatol = 0.0, xrtol = 4eps())
+    rmax = κ * (1 - 1e-14)
+    # beyond P/P0 ~ 1e14 the compression is indistinguishable from κ in Float64
+    f(rmax) > 0 || throw(DomainError(P, "quasi-Euler shock too strong"))
+    r = find_zero(f, (1.0, rmax), Roots.Brent(); xatol = 0.0, xrtol = 4eps())
     ρ1 = U.ρ * r
     P0 = ptot(U.ρ, U.p, U.bt)
     m = sqrt((P - P0) / (1 / U.ρ - 1 / ρ1))            # mass flux
